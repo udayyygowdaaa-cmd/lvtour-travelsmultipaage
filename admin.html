@@ -1,0 +1,24 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Bookings Admin | LV Tour &amp; Travels</title>
+<style>*{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:#fbf6ef;color:#2b2118}.w{max-width:1100px;margin:auto;padding:24px 4%}h1{color:#6b3f1d}
+.box{background:#fff;border-radius:14px;padding:20px;box-shadow:0 8px 24px rgba(74,42,18,.1);margin-bottom:20px}input{padding:10px 12px;border:1.5px solid #e3d6c6;border-radius:8px;font:inherit;width:100%;margin:4px 0 12px}
+button{background:#6b3f1d;color:#fff;border:0;border-radius:50px;padding:11px 26px;font-weight:600;cursor:pointer}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.st{background:#6b3f1d;color:#fff;border-radius:12px;padding:16px;text-align:center}.st b{display:block;font-size:2rem;color:#d99a3d}.tw{overflow:auto}table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:9px 10px;border-bottom:1px solid #eee;text-align:left;white-space:nowrap}th{background:#fbf6ef;color:#6b3f1d}.e{color:#b3261e}</style></head><body><div class="w">
+<h1>Bookings Admin</h1>
+<div class="box"><label>Google Script URL</label><input id="u" placeholder="https://script.google.com/macros/s/.../exec"><label>Password (the KEY from your script)</label><input id="k" type="password"><button id="go">Load bookings</button> <span class="e" id="er"></span></div>
+<div id="out" style="display:none"><div class="box"><div class="stats" id="stats"></div></div><div class="box"><input id="q" placeholder="Search name, phone, package..."><div class="tw"><table><thead id="th"></thead><tbody id="tb"></tbody></table></div></div></div></div>
+<script>
+const $=id=>document.getElementById(id);let rows=[],head=[];
+try{$('u').value=localStorage.getItem('lvU')||'';}catch(e){}
+function cell(v){const td=document.createElement('td');td.textContent=v==null?'':String(v);return td}
+function draw(){const q=$('q').value.toLowerCase();$('tb').textContent='';rows.filter(r=>!q||r.join(' ').toLowerCase().includes(q)).reverse().forEach(r=>{const tr=document.createElement('tr');r.forEach(v=>tr.appendChild(cell(v)));$('tb').appendChild(tr)})}
+$('go').onclick=async()=>{$('er').textContent='';const u=$('u').value.trim(),k=$('k').value;try{localStorage.setItem('lvU',u)}catch(e){}
+try{const r=await fetch(u+(u.includes('?')?'&':'?')+'key='+encodeURIComponent(k));const j=await r.json();if(j.error){$('er').textContent=j.error;return}
+head=j.rows[0]||[];rows=j.rows.slice(1);const pi=head.indexOf('Package'),ti=head.indexOf('Travellers');const by={};let trav=0;
+rows.forEach(r=>{by[r[pi]]=(by[r[pi]]||0)+1;trav+=+r[ti]||0});
+$('stats').textContent='';const add=(n,l)=>{const d=document.createElement('div');d.className='st';const b=document.createElement('b');b.textContent=n;d.appendChild(b);d.appendChild(document.createTextNode(l));$('stats').appendChild(d)};
+add(rows.length,'Total bookings');add(trav,'Total travellers');Object.entries(by).sort((a,b)=>b[1]-a[1]).forEach(([p,n])=>add(n,p));
+$('th').textContent='';const tr=document.createElement('tr');head.forEach(h=>{const th=document.createElement('th');th.textContent=h;tr.appendChild(th)});$('th').appendChild(tr);
+$('out').style.display='block';draw()}catch(x){$('er').textContent='Could not load. Check the URL and that the script is deployed for "Anyone".'}};
+$('q').oninput=draw;
+</script></body></html>
